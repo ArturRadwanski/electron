@@ -16,10 +16,11 @@ import { BracketDisplayer } from '../BracketDisplayer'
 interface Bracket {
   lastGames: Array<number> | null
   nextGame: number | null
-  teamnames: Array<string>
+  teamnames: Array<string | undefined>
   bracketNo: number
   roundNo: number
   bye: boolean
+  winner: number
 }
 let round = 1,
   closest: number,
@@ -31,7 +32,8 @@ let round = 1,
   teamMark: number,
   nextInc: number,
   startingRound = round,
-  last: Array<{ game: number; teams: any }>
+  last: Array<{ game: number; winner: string }>
+
 export function BracketGenerator(props: any) {
   const knownBrackets = [2, 4, 8, 16, 32, 64, 128] // brackets with "perfect" proportions (full fields, no byes)
   const [, updateState] = useState({})
@@ -51,12 +53,12 @@ export function BracketGenerator(props: any) {
       (nextInc = base / 2)
   }
 
-  let [players, setPlayers] = useState<Array<string>>([])
-
+  const [players, setPlayers] = useState<Array<string>>([])
   let bracketCount = 0
 
   function getBracket() {
     startingRound = round
+    let namesOfTheWinners = []
     for (let i = 1 + brackets.length; i <= base - 1; i++) {
       var baseR = i / baseT,
         isBye = false
@@ -65,29 +67,27 @@ export function BracketGenerator(props: any) {
         isBye = true
         byes--
       }
-
+      namesOfTheWinners.push(teamMark)
       last = brackets
         .filter(b => {
           return b.nextGame == i
         })
         .map(b => {
-          return { game: b.bracketNo, teams: b.teamnames }
+          return { game: b.bracketNo, winner: b.teamnames[b.winner]! }
         })
       brackets.push({
         lastGames: round == 1 ? null : [last[0].game, last[1].game],
         nextGame: nextInc + i > base - 1 ? null : nextInc + i,
         teamnames:
           round == 1
-            ? [players[teamMark], players[teamMark + 1]]
-            : [
-                last[0].teams[Math.floor(Math.random() * 2)],
-                last[1].teams[Math.floor(Math.random() * 2)],
-              ],
+            ? [players[teamMark], isBye ? undefined : players[teamMark + 1]]
+            : [last[0].winner, last[1].winner],
         bracketNo: i,
         roundNo: round,
         bye: isBye,
+        winner: 0,
       })
-      teamMark += 2
+      teamMark += isBye ? 1 : 2
       if (i % 2 != 0) nextInc--
       while (baseR >= 1) {
         round++
@@ -100,26 +100,55 @@ export function BracketGenerator(props: any) {
         break
       }
     }
-    console.log(brackets)
     return brackets
+  }
+
+  function saveResultsToFile() {
+    let phasedBoxes: Array<Array<Bracket>> = []
+    for (let i = 1; i > -1; i++) {
+      let tab = brackets.filter(el => el.roundNo == i)
+      if (tab.length == 0) break
+      phasedBoxes.push(tab)
+    }
+    let string: string = 'data:text/plain,'
+    phasedBoxes.map((el, i) => {
+      let line: string = `round ${i + 1}:`
+      el.map(game => {
+        line += `(${game.teamnames[0]}${
+          game.teamnames[1] == undefined ? '' : ', ' + game.teamnames[1]
+        }) => ${game.teamnames[game.winner]}; `
+      })
+      line += '\n'
+      string += line
+    })
+    window.Main.sendMessage(string)
   }
 
   return (
     <Layout>
-      <PlayersLoader setPlayers={setPlayers} players={players}></PlayersLoader>
+      <PlayersLoader
+        setPlayers={setPlayers}
+        players={players}
+        brackets={brackets}
+        forceReload={forceUpdate}
+      ></PlayersLoader>
       <Half>
-        <BracketDisplayer players={brackets}></BracketDisplayer>
+        <BracketDisplayer
+          players={brackets}
+          forceUpdate={forceUpdate}
+        ></BracketDisplayer>
         <Container>
           <Button
             onClick={() => {
               setUpVariables(players.length)
               brackets.length = 0
-              getBracket()
+              let winners = getBracket()
             }}
           >
             Generate brackets
           </Button>
           <Button onClick={() => getBracket()}>Next round</Button>
+          <Button onClick={saveResultsToFile}>Save results to file</Button>
         </Container>
       </Half>
     </Layout>

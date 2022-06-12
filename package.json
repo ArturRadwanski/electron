@@ -15,6 +15,8 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
+    "@electron/remote": "^2.0.8",
+    "electron-squirrel-startup": "^1.0.0",
     "react": "17.0.2",
     "react-dom": "17.0.2",
     "react-hot-loader": "4.13.0",
@@ -65,14 +67,7 @@
   },
   "config": {
     "forge": {
-      "packagerConfig": {
-        "name": "Electron starter",
-        "executableName": "electron-starter",
-        "icon": "assets/icon",
-        "extraResource": [
-          "assets"
-        ]
-      },
+      "packagerConfig": {},
       "plugins": [
         [
           "@electron-forge/plugin-webpack",
@@ -97,9 +92,7 @@
       "makers": [
         {
           "name": "@electron-forge/maker-squirrel",
-          "config": {
-            "name": "Electron Starter"
-          }
+          "config": {}
         },
         {
           "name": "@electron-forge/maker-zip",

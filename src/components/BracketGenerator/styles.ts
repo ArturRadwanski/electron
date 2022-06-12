@@ -9,14 +9,14 @@ export const Container = styled.div`
 export const Layout = styled.div`
   display: flex;
   justify-content: space-between;
-  width: 100%;
-  height: 100vh;
+  min-width: 100%;
 `
 export const Half = styled.div`
   display: flex;
-  justify-content: space-between;
+  justify-content: space-around;
   align-items: center;
   align-self: center;
   flex-direction: column;
   width: 70%;
+  height: 100%;
 `

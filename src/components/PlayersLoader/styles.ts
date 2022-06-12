@@ -4,7 +4,8 @@ export const Container = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  width: 30%;
+  margin: 0 10px;
+  min-width: 100px;
   & > Button {
     margin-top: 50px;
   }
